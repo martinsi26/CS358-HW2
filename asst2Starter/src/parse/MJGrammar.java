@@ -84,6 +84,7 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     //: <decl in class> ::= <method decl> => pass
+    // : <decl in class> ::= <inst var decl> => pass
 
     //: <method decl> ::= `public `void # ID `( `) `{ <stmt>* `} =>
     public Decl createMethodDeclVoid(int pos, String name, List<Statement> stmts)
@@ -127,6 +128,17 @@ public class MJGrammar implements MessageObject, FilePosObject
 
     //: <stmt> ::= <assign> `; => pass
 
+    // TO DO - Call exp in statement
+    // : <stmt> ::= <callExp> `; => pass
+
+    //: <stmt> ::= # `break `; =>
+    public Statement newBreak(int pos)
+    {
+        Break(pos);
+    }
+
+    //: <stmt> ::= `; => null
+
     //: <stmt> ::= # `{ <stmt>* `} =>
     public Statement newBlock(int pos, List<Statement> sl)
     {
@@ -139,6 +151,8 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new Assign(pos, lhs, rhs);
     }
+    // TO DO - Need to add other assigns such as ID++ and ID--
+    // : <assign> ::= 
 
     //: <local var decl> ::= <type> # ID `= <exp> =>
     public Statement localVarDecl(Type t, int pos, String name, Exp init)
@@ -146,28 +160,85 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, name, init));
     }
 
+    // //: <stmt> ::= `while # `( <exp> `) <stmt> =>
+    // public BreakTarget newWhile(int pos, Exp e, Statement s) 
+    // {
+    //     return new While(pos, e, s);
+    // }
+
+    // //: <else stmt> ::= `else <stmt> => pass
+    // //: <stmt> ::= `if # `( <exp> `) <stmt> <else stmt>? =>
+    // public Statement newIf(int pos, Exp e, Statement s1, Statement s2) 
+    // {
+    //     return new If(pos, e, s1, s2)
+    // }
+
+
     //================================================================
     // expressions
     //================================================================
 
     //: <exp> ::= <exp8> => pass
+    //: <exp8> ::= <exp8> # `|| <exp7> =>
+    public Exp newOr(Exp e1, int pos, Exp e2)
+    {
+        return new Or(pos, e1, e2);
+    }
 
-    // these precedence levels have not been filled in at all, so there
-    // are only pass-through productions
     //: <exp8> ::= <exp7> => pass
+    //: <exp7> ::= <exp7> # `&& <exp6> =>
+    public Exp newAnd(Exp e1, int pos, Exp e2)
+    {
+        return new And(pos, e1, e2);
+    }
+
     //: <exp7> ::= <exp6> => pass
+    //: <exp6> ::= <exp6> # `== <exp5> =>
+    public Exp newEquals(Exp e1, int pos, Exp e2)
+    {
+        return new Equals(pos, e1, e2);
+    }
+    // TO DO
+    // //: <exp6> ::= <exp6> # `!= <exp6> =>
+    // public Exp newNotEquals(Exp e1, int pos, Exp e2)
+    // {
+    //     return new ___(pos, e1, e2);
+    // }
+
     //: <exp6> ::= <exp5> => pass
+    //: <exp5> ::= <exp5> # `< <exp4> =>
+    public Exp newLessThan(Exp e1, int pos, Exp e2)
+    {
+        return new LessThan(pos, e1, e2);
+    }
+    //: <exp5> ::= <exp5> # `> <exp4> =>
+    public Exp newGreaterThan(Exp e1, int pos, Exp e2)
+    {
+        return new GreaterThan(pos, e1, e2);
+    }
+    //: <exp5> ::= <exp5> # `instanceof <type> =>
+    public Exp newInstanceOf(Exp e, int pos, Type t)
+    {
+        return new InstanceOf(pos, e, t);
+    }
+    // TO DO
+    // //: <exp5> ::= <exp5> # `>= <exp5> =>
+    // public Exp newGreaterThan(Exp e1, int pos, Exp e2)
+    // {
+    //     return new GreaterThan(pos, e1, e2);
+    // }
+    // //: <exp5> ::= <exp5> # `<= <exp5> =>
+    // public Exp newGreaterThan(Exp e1, int pos, Exp e2)
+    // {
+    //     return new GreaterThan(pos, e1, e2);
+    // }
+
     //: <exp5> ::= <exp4> => pass
-
-    // these remaining precedence levels have been filled in to some extent,
-    // but most or all of them have need to be expanded
-
     //: <exp4> ::= <exp4> # `+ <exp3> =>
     public Exp newPlus(Exp e1, int pos, Exp e2)
     {
         return new Plus(pos, e1, e2);
     }
-
     //: <exp4> ::= <exp4> # `- <exp3> =>
     public Exp newMinus(Exp e1, int pos, Exp e2)
     {
@@ -175,31 +246,48 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     //: <exp4> ::= <exp3> => pass
-
     //: <exp3> ::= <exp3> # `* <exp2> =>
     public Exp newTimes(Exp e1, int pos, Exp e2)
     {
         return new Times(pos, e1, e2);
     }
-    //: <exp3> ::= <exp2> => pass
+    //: <exp3> ::= <exp3> # `/ <exp2> =>
+    public Exp newDivide(Exp e1, int pos, Exp e2)
+    {
+        return new Divide(pos, e1, e2);
+    }
+    //: <exp3> ::= <exp3> # `% <exp2> =>
+    public Exp newRemainder(Exp e1, int pos, Exp e2)
+    {
+        return new Remainder(pos, e1, e2);
+    }
 
+    //: <exp3> ::= <exp2> => pass
+    //: <exp2> ::= # `! <exp1> =>
+    public Exp newNot(int pos, Exp e)
+    {
+        return new Not(pos, e);
+    }
     //: <exp2> ::= <cast exp> => pass
     //: <exp2> ::= <unary exp> => pass
-
     //: <cast exp> ::= # `( <type> `) <cast exp> =>
     public Exp newCast(int pos, Type t, Exp e)
     {
         return new Cast(pos, t, e);
     }
     //: <cast exp> ::= # `( <type> `) <exp1> => Exp newCast(int, Type, Exp)
-
     //: <unary exp> ::= # `- <unary exp> =>
     public Exp newUnaryMinus(int pos, Exp e)
     {
         return new Minus(pos, new IntegerLiteral(pos, 0), e);
     }
-    //: <unary exp> ::= <exp1> => pass
+    //: <unary exp> ::= # `+ <unary exp> =>
+    public Exp newUnaryPlus(int pos, Exp e)
+    {
+        return new Plus(pos, new IntegerLiteral(pos, 0), e);
+    }
 
+    //: <unary exp> ::= <exp1> => pass
     //: <exp1> ::= # ID  =>
     public Exp newIdentfierExp(int pos, String name)
     {
@@ -209,6 +297,11 @@ public class MJGrammar implements MessageObject, FilePosObject
     public Exp newArrayLookup(Exp e1, int pos, Exp e2)
     {
         return new ArrayLookup(pos, e1, e2);
+    }
+    //: <exp1> ::= `new <type> !<empty bracket pair> # `[ <exp> `] <empty bracket pair>* =>
+    public Exp newArray(Type t, int pos, Exp e, List<Object> dummy)
+    {
+        return new NewArray(pos, t, e);
     }
     //: <exp1> ::= # INTLIT =>
     public Exp newIntegerLiteral(int pos, int n)
@@ -245,14 +338,25 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new Null(pos);
     }
-    // //: <exp1> ::= # <type> `( `) =>
-    // public Exp newObject(int pos, Type t)
-    // {
-    //     return new newObject(pos, t);
-    // }
-    // : <exp1> ::= callExp
-    // : callExp ::= ID `( expList? `)
-    // : 
+    // TO DO - Expression in parenthesis and InstVarAccess
+    // //: <exp1> ::= `( <exp> `) => pass
+    //: <exp1> ::= <exp1> `. # ID =>
+    public Exp newInstVarAccess(Exp e, int pos, String name)
+    {
+        return new InstVarAccess(pos, e, name);
+    }
+    //: <exp1> ::= `new # <type> `( `) =>
+    public Exp newObject(int pos, Type t)
+    {
+        return new NewObject(pos, t);
+    }
+    // TO DO
+    // : <exp1> ::= <callExp>
+    // : <callExp> ::= ID `( <expList>? `)
+    // : <callExp> ::= <exp1> `. `( <expList>? `)
+    // : <callExp> ::= `super `. `( <expList>? `)
+    // : <expList> ::= <exp> <comma exp>*
+    // : <comma exp> ::= `, <exp> => null
 
     //================================================================
     // Lexical grammar for filtered language begins here: DO NOT
