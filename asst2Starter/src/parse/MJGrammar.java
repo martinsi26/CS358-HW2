@@ -92,8 +92,8 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new MethodDeclVoid(pos, name, new VarDeclList(new VarDeclList()),
                                   new StatementList(stmts));
     }
-    //: <method decl> ::= `public # <type> ID `( `) `{ <stmt>* `return <exp> `} =>
-    public Decl createMethodDeclVoid(int pos, Type t, String name, List<Statement> stmts, Exp e)
+    //: <method decl> ::= `public <type> # ID `( `) `{ <stmt>* `return <exp> `; `} =>
+    public Decl createMethodDeclVoid(Type t, int pos, String name, List<Statement> stmts, Exp e)
     {
         return new MethodDeclNonVoid(pos, t, name, new VarDeclList(new VarDeclList()),
                                   new StatementList(stmts), e);
@@ -134,7 +134,7 @@ public class MJGrammar implements MessageObject, FilePosObject
     //: <stmt> ::= # `break `; =>
     public Statement newBreak(int pos)
     {
-        Break(pos);
+        return new Break(pos);
     }
 
     //: <stmt> ::= `; => null
@@ -160,6 +160,7 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, name, init));
     }
 
+    // TO DO - While/If/Ect
     // //: <stmt> ::= `while # `( <exp> `) <stmt> =>
     // public BreakTarget newWhile(int pos, Exp e, Statement s) 
     // {
@@ -345,11 +346,12 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new InstVarAccess(pos, e, name);
     }
-    //: <exp1> ::= `new # <type> `( `) =>
-    public Exp newObject(int pos, Type t)
-    {
-        return new NewObject(pos, t);
-    }
+    // TO DO - Figure out how to get "IdentifierType" instead of "Type"
+    // //: <exp1> ::= `new # <type> `( `) =>
+    // public Exp newObject(int pos, Type t)
+    // {
+    //     return new NewObject(pos, t);
+    // }
     // TO DO
     // : <exp1> ::= <callExp>
     // : <callExp> ::= ID `( <expList>? `)
