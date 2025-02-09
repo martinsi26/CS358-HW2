@@ -1,0 +1,1 @@
+java -cp ".;wrangLR.jar" ASTTest
