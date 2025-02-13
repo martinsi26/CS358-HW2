@@ -15,6 +15,16 @@ class Main {
     boolean nn = (int[][])(String)(Object)z;
     int k = - - - -n;
 
+    if(b <4) {
+      b++;
+    } else {
+      n--;
+    }
+
+    if(b < 10) {
+      b++;
+    }
+
     return n;
   }
 }
