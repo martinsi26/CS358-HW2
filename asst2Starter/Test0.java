@@ -6,12 +6,15 @@ class Main {
   /* this is a comment */
   /*/ this is another comment */
   /*   /* this is another comment */
+
+  int c;
+  
   public int main() {
     int b = 3;
     int n = 3+4*5;
     boolean nn = (int[][])(String)(Object)z;
     int k = - - - -n;
-    break;
+
     return n;
   }
 }

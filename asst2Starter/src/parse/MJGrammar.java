@@ -84,19 +84,37 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     //: <decl in class> ::= <method decl> => pass
-    // : <decl in class> ::= <inst var decl> => pass
+    //: <decl in class> ::= <inst var decl> => pass
+
+    // //: <formal list> ::= <type> # ID <list>* =>
+    // public VarDeclList newVarDeclList(Type t, int pos, String name, List<VarDecl> list)
+    // {
+    //     list.add(0, new VarDecl(pos, t, name));
+    //     return new VarDeclList(list);
+    // }
+    // //: <list> ::= `, <type> # ID =>
+    // public Decl newVarDecl(Type t, int pos, String name) 
+    // {
+    //     return new VarDecl(pos, t, name);
+    // }
 
     //: <method decl> ::= `public `void # ID `( `) `{ <stmt>* `} =>
     public Decl createMethodDeclVoid(int pos, String name, List<Statement> stmts)
     {
-        return new MethodDeclVoid(pos, name, new VarDeclList(new VarDeclList()),
-                                  new StatementList(stmts));
+        return new MethodDeclVoid(pos, name, new VarDeclList(new VarDeclList()), 
+                                new StatementList(stmts));
     }
     //: <method decl> ::= `public <type> # ID `( `) `{ <stmt>* `return <exp> `; `} =>
     public Decl createMethodDeclVoid(Type t, int pos, String name, List<Statement> stmts, Exp e)
     {
-        return new MethodDeclNonVoid(pos, t, name, new VarDeclList(new VarDeclList()),
-                                  new StatementList(stmts), e);
+        return new MethodDeclNonVoid(pos, t, name, new VarDeclList(new VarDeclList()), 
+                                    new StatementList(stmts), e);
+    }
+
+    //: <inst var decl> ::= <type> # ID `; =>
+    public Decl createInstVarDecl(Type t, int pos, String name)
+    {
+        return new InstVarDecl(pos, t, name);
     }
 
     //: <type> ::= # `int =>
@@ -146,13 +164,30 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
     //: <stmt> ::= <local var decl> `; => pass
 
-    //: <assign> ::= <exp> # `= <exp> =>
+    //: <assign> ::= <exp1> # `= <exp> =>
     public Statement assign(Exp lhs, int pos, Exp rhs)
     {
         return new Assign(pos, lhs, rhs);
     }
-    // TO DO - Need to add other assigns such as ID++ and ID--
-    // : <assign> ::= 
+    //: <assign> ::= ID # `++ =>
+    public Statement newPostIncrement(String name, int pos) {
+        IdentifierExp id = new IdentifierExp(pos, name);
+        return new Assign(pos, id, new Plus(pos, id, new IntegerLiteral(pos, 1)));
+    }
+    //: <assign> ::= ID # `-- =>
+    public Statement newPostDecrement(String name, int pos) {
+        IdentifierExp id = new IdentifierExp(pos, name);
+        return new Assign(pos, id, new Minus(pos, id, new IntegerLiteral(pos, 1)));
+    }
+    //: <assign> ::= # `++ ID  =>
+    public Statement newPreIncrement(int pos, String name) {
+        IdentifierExp id = new IdentifierExp(pos, name);
+        return new Assign(pos, id, new Plus(pos, id, new IntegerLiteral(pos, 1)));
+    }//: <assign> ::= # `-- ID =>
+    public Statement newPreDecrement(int pos, String name) {
+        IdentifierExp id = new IdentifierExp(pos, name);
+        return new Assign(pos, id, new Minus(pos, id, new IntegerLiteral(pos, 1)));
+    }
 
     //: <local var decl> ::= <type> # ID `= <exp> =>
     public Statement localVarDecl(Type t, int pos, String name, Exp init)
@@ -160,19 +195,36 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, name, init));
     }
 
-    // TO DO - While/If/Ect
-    // //: <stmt> ::= `while # `( <exp> `) <stmt> =>
-    // public BreakTarget newWhile(int pos, Exp e, Statement s) 
-    // {
-    //     return new While(pos, e, s);
-    // }
+    //: <stmt> ::= `while # `( <exp> `) <stmt> =>
+    public Statement newWhile(int pos, Exp e, Statement s) 
+    {
+        return new While(pos, e, s);
+    }
 
+    // TODO - If statement
     // //: <else stmt> ::= `else <stmt> => pass
     // //: <stmt> ::= `if # `( <exp> `) <stmt> <else stmt>? =>
     // public Statement newIf(int pos, Exp e, Statement s1, Statement s2) 
     // {
-    //     return new If(pos, e, s1, s2)
+    //     return new If(pos, e, s1, s2);
     // }
+
+    // TO DO - For Loop
+    // //: <stmt> ::= # `for `( <for exp>? `; <exp>? `; <for iter>? `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <for exp> ::= <type> # ID `= <exp> =>
+    // public Statement forDecl(Type t, int pos, String name, Exp e)
+    // {
+    //     return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, name, e));
+    // }
+    // //: <for exp> ::= <assign> => pass
+    // //: <for exp> ::= <callExp> => pass
+    // //: <for iter> ::= <assign> => pass
+    // //: <for iter> ::= <callExp> => pass
+
 
 
     //================================================================
@@ -199,12 +251,11 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new Equals(pos, e1, e2);
     }
-    // TO DO
-    // //: <exp6> ::= <exp6> # `!= <exp6> =>
-    // public Exp newNotEquals(Exp e1, int pos, Exp e2)
-    // {
-    //     return new ___(pos, e1, e2);
-    // }
+    //: <exp6> ::= <exp6> # `!= <exp5> =>
+    public Exp newNotEquals(Exp e1, int pos, Exp e2)
+    {
+        return new Not(pos, new Equals(pos, e1, e2));
+    }
 
     //: <exp6> ::= <exp5> => pass
     //: <exp5> ::= <exp5> # `< <exp4> =>
@@ -222,17 +273,16 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new InstanceOf(pos, e, t);
     }
-    // TO DO
-    // //: <exp5> ::= <exp5> # `>= <exp5> =>
-    // public Exp newGreaterThan(Exp e1, int pos, Exp e2)
-    // {
-    //     return new GreaterThan(pos, e1, e2);
-    // }
-    // //: <exp5> ::= <exp5> # `<= <exp5> =>
-    // public Exp newGreaterThan(Exp e1, int pos, Exp e2)
-    // {
-    //     return new GreaterThan(pos, e1, e2);
-    // }
+    //: <exp5> ::= <exp5> # `<= <exp4> =>
+    public Exp newLessThanEquals(Exp e1, int pos, Exp e2)
+    {
+        return new Not(pos, new GreaterThan(pos, e1, e2));
+    }
+    //: <exp5> ::= <exp5> # `>= <exp4> =>
+    public Exp newGreaterThanEquals(Exp e1, int pos, Exp e2)
+    {
+        return new Not(pos, new LessThan(pos, e1, e2));
+    }
 
     //: <exp5> ::= <exp4> => pass
     //: <exp4> ::= <exp4> # `+ <exp3> =>
@@ -339,26 +389,45 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new Null(pos);
     }
-    // TO DO - Expression in parenthesis and InstVarAccess
+    // TO DO - Expression in parenthesis
     // //: <exp1> ::= `( <exp> `) => pass
     //: <exp1> ::= <exp1> `. # ID =>
     public Exp newInstVarAccess(Exp e, int pos, String name)
     {
+        // The idea is if it is expression.length then we are doing an array lookup
+        // otherwise we are doing an InstVarAccess.
+        if(name.equals("length")) {
+            return new ArrayLength(pos, e);
+        }
         return new InstVarAccess(pos, e, name);
     }
-    // TO DO - Figure out how to get "IdentifierType" instead of "Type"
-    // //: <exp1> ::= `new # <type> `( `) =>
-    // public Exp newObject(int pos, Type t)
-    // {
-    //     return new NewObject(pos, t);
-    // }
+    //: <exp1> ::= `new # ID `( `) =>
+    public Exp newObject(int pos, String name)
+    {
+        return new NewObject(pos, new IdentifierType(pos, name));
+    }
     // TO DO
-    // : <exp1> ::= <callExp>
-    // : <callExp> ::= ID `( <expList>? `)
-    // : <callExp> ::= <exp1> `. `( <expList>? `)
-    // : <callExp> ::= `super `. `( <expList>? `)
-    // : <expList> ::= <exp> <comma exp>*
-    // : <comma exp> ::= `, <exp> => null
+    // //: <exp1> ::= <callExp> => pass
+
+    // //: <expList> ::= <exp> <comma exp>* =>
+    // public Exp newExpList(Exp e, List<Exp> elist)
+    // {
+    //     elist.add(0, e);
+    //     return new ExpList(elist);
+    // }
+    // //: <comma exp> ::= `, <exp> => pass
+
+    // //: <callExp> ::= ID `( <expList>? `)
+    // //: <callExp> ::= <exp1> `. # ID `( <expList>? `) =>
+    // public Exp newCall(Exp e, int pos, String name, ExpList params) 
+    // {
+    //     return new Call(pos, e, name, params);
+    // }
+    // //: <callExp> ::= `super `. # ID `( <expList>? `) =>
+    // public Exp newSuperCall(int pos, String name, ExpList params) 
+    // {
+    //     return new Call(pos, new Super(pos), name, params);
+    // }
 
     //================================================================
     // Lexical grammar for filtered language begins here: DO NOT
