@@ -5,6 +5,13 @@ import syntaxtree.*;
 import wrangLR.runtime.MessageObject;
 import wrangLR.runtime.FilePosObject;
 
+
+/*
+// Extensions I have added
+// -Extension 1
+// -
+*/
+
 public class MJGrammar implements MessageObject, FilePosObject
 {
 
@@ -220,11 +227,20 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new While(pos, e, s);
     }
 
+    //: <stmt> ::= `do # <stmt> `while `( <exp> `) `; =>
+    public Statement newDo(int pos, Statement s, Exp e)
+    {
+        List<Statement> blockList = new java.util.ArrayList<>();
+        blockList.add(s);
+        blockList.add(new If(pos, new Not(pos, e), new Break(pos), new Block(pos, new StatementList())));
+        return new While(pos, new True(pos), new Block(pos, new StatementList(blockList)));
+    }
+
     //: <else stmt> ::= `else <stmt> => pass
     //: <stmt> ::= `if # `( <exp> `) <stmt> !<else stmt> =>
     public Statement newIf(int pos, Exp e, Statement s1) 
     {
-        return new If(pos, e, s1, null);
+        return new If(pos, e, s1, new Block(pos, new StatementList()));
     }
     //: <stmt> ::= `if # `( <exp> `) <stmt> <else stmt> =>
     public Statement newIfElse(int pos, Exp e, Statement s1, Statement s2) 
@@ -232,12 +248,67 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new If(pos, e, s1, s2);
     }
 
+    //: <stmt> ::= # `switch `( <exp> `) `{ <switch choice>* `} =>
+    public Statement newSwitch(int pos, Exp e, List<Statement> stmts)
+    {
+        return new Switch(pos, e, new StatementList(stmts));
+    }
+    //: <switch choice> ::= <stmt> => pass
+    //: <switch choice> ::= <case> => pass
+    //: <switch choice> ::= <default> => pass
+    //: <case> ::= # `case <exp> `: =>
+    public Statement newCase(int pos, Exp e)
+    {
+        return new Case(pos, e);
+    }
+    //: <default> ::= # `default `: =>
+    public Statement newDefault(int pos)
+    {
+        return new Default(pos);
+    }
+
     // TODO - For Loop
-    // //: <stmt> ::= # `for `( <for exp>? `; <exp>? `; <for iter>? `) <stmt> =>
+    // //: <stmt> ::= # `for `( <for exp> `; <exp> `; <for iter> `) <stmt> =>
+    // public Statement newFor(int pos, Statement forExp, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <stmt> ::= # `for `( !<for exp> `; <exp> `; <for iter> `) <stmt> =>
+    // public Statement newFor(int pos, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, null, s);
+    // }
+    // //: <stmt> ::= # `for `( <for exp> `; !<exp> `; <for iter> `) <stmt> =>
     // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
     // {
     //     return new While(pos, e, s);
     // }
+    // //: <stmt> ::= # `for `( <for exp> `; <exp> `; !<for iter> `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <stmt> ::= # `for `( !<for exp>? `; !<exp>? `; <for iter>? `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <stmt> ::= # `for `( <for exp>? `; !<exp>? `; !<for iter>? `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <stmt> ::= # `for `( !<for exp>? `; <exp>? `; !<for iter>? `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+    // //: <stmt> ::= # `for `( !<for exp>? `; !<exp>? `; !<for iter>? `) <stmt> =>
+    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
+    // {
+    //     return new While(pos, e, s);
+    // }
+
     // //: <for exp> ::= <type> # ID `= <exp> =>
     // public Statement forDecl(Type t, int pos, String name, Exp e)
     // {
@@ -247,7 +318,6 @@ public class MJGrammar implements MessageObject, FilePosObject
     // //: <for exp> ::= <callExp> => pass
     // //: <for iter> ::= <assign> => pass
     // //: <for iter> ::= <callExp> => pass
-
 
 
     //================================================================
