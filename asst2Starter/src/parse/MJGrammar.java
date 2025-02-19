@@ -232,19 +232,14 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new While(pos, new True(pos), new Block(pos, new StatementList(blockList)));
     }
 
-    //: <else stmt> ::= `else <stmt> => pass
-    //: <stmt> ::= `if # `( <exp> `) <stmt> !<else stmt> =>
+    //: <stmt> ::= `if # `( <exp> `) <stmt> !`else =>
     public Statement newIf(int pos, Exp e, Statement s1) 
     {
         return new If(pos, e, s1, new Block(pos, new StatementList()));
     }
-    //: <stmt> ::= `if # `( <exp> `) <stmt> <else stmt> =>
+    //: <stmt> ::= `if # `( <exp> `) <stmt> `else <stmt> =>
     public Statement newIfElse(int pos, Exp e, Statement s1, Statement s2) 
     {
-        // if(s2 == null)
-        // {
-        //     new Block(pos, new StatementList())
-        // }
         return new If(pos, e, s1, s2);
     }
 
@@ -267,7 +262,6 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new Default(pos);
     }
 
-    // TODO - For Loop
     //: <stmt> ::= # `for `( <for exp>? `; <exp>? `; <for iter>? `) <stmt> =>
     public Statement newFor(int pos, Statement forExp, Exp e, Statement forI, Statement s)
     {
@@ -415,12 +409,13 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new IdentifierExp(pos, name);
     }
-    //: <exp1> ::= <exp1> !<empty bracket pair> # `[ <exp> `] =>
+    //: expBkt ::= `[ <exp> `] => pass
+    //: <exp1> ::= <exp1> !<empty bracket pair> # expBkt =>
     public Exp newArrayLookup(Exp e1, int pos, Exp e2)
     {
         return new ArrayLookup(pos, e1, e2);
     }
-    //: <exp1> ::= `new <baseType> !<empty bracket pair> # `[ <exp> `] <empty bracket pair>* =>
+    //: <exp1> ::= `new <baseType> !<empty bracket pair> # expBkt <empty bracket pair>** =>
     public Exp newArray(Type t, int pos, Exp e, List<Object> dummy)
     {
         return new NewArray(pos, t, e);
@@ -461,7 +456,7 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new Null(pos);
     }
 
-    //: <exp1> ::= `( !<type> <exp1> `) => pass
+    //: <exp1> ::= !<cast exp> `( <exp> `) => pass
     //: <exp1> ::= <exp1> `. # ID =>
     public Exp newInstVarAccess(Exp e, int pos, String name)
     {
