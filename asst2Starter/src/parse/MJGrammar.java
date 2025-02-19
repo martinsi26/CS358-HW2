@@ -9,7 +9,7 @@ import wrangLR.runtime.FilePosObject;
 /*
 // Extensions I have added
 // -Extension 1
-// -
+// -Extension 2
 */
 
 public class MJGrammar implements MessageObject, FilePosObject
