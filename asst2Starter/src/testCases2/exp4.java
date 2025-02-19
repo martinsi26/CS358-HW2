@@ -20,7 +20,7 @@ class MyClass {
 	a = x%z+y;
 	a = -+x;
 	a = +-9;
-	a = +!z;
+	a = +!x;
 	a = (someVal)-a;
 	a = -x+!y%z&&w*a-b==c+d!=e<=f>=g<h>i/j;
     }

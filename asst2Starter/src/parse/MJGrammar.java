@@ -85,14 +85,14 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     //: <extends> ::= `extends ID => pass
-    //: <class decl> ::= `class # ID !<extends> `{ <decl in class>* `} =>
-    public ClassDecl createClassDecl(int pos, String name, List<Decl> vec)
-    {
-        return new ClassDecl(pos, name, "Object", new DeclList(vec));
-    }
-    //: <class decl> ::= `class # ID <extends> `{ <decl in class>* `} =>
+
+    //: <class decl> ::= `class # ID <extends>? `{ <decl in class>* `} =>
     public ClassDecl createClassDecl(int pos, String name, String supername, List<Decl> vec)
     {
+        if(supername == null)
+        {
+            supername = "Object";
+        }
         return new ClassDecl(pos, name, supername, new DeclList(vec));
     }
 
@@ -111,26 +111,20 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new FormalDecl(pos, t, name);
     }
 
-    //: <method decl> ::= `public `void # ID `( !<formal list> `) `{ <stmt>* `} =>
-    public Decl createMethodDeclVoid(int pos, String name, List<Statement> stmts)
-    {
-        return new MethodDeclVoid(pos, name, new VarDeclList(new VarDeclList()), 
-                                new StatementList(stmts));
-    }
-    //: <method decl> ::= `public `void # ID `( <formal list> `) `{ <stmt>* `} =>
+    //: <method decl> ::= `public `void # ID `( <formal list>? `) `{ <stmtDecl>* `} =>
     public Decl createMethodDeclVoidFormal(int pos, String name, VarDeclList list, List<Statement> stmts)
     {
+        if(list == null) {
+            list = new VarDeclList();
+        }
         return new MethodDeclVoid(pos, name, list, new StatementList(stmts));
     }
-    //: <method decl> ::= `public <type> # ID `( `) `{ <stmt>* `return <exp> `; `} =>
-    public Decl createMethodDeclVoid(Type t, int pos, String name, List<Statement> stmts, Exp e)
-    {
-        return new MethodDeclNonVoid(pos, t, name, new VarDeclList(new VarDeclList()), 
-                                    new StatementList(stmts), e);
-    }
-    //: <method decl> ::= `public <type> # ID `( <formal list> `) `{ <stmt>* `return <exp> `; `} =>
+    //: <method decl> ::= `public <type> # ID `( <formal list>? `) `{ <stmtDecl>* `return <exp> `; `} =>
     public Decl createMethodDeclVoid(Type t, int pos, String name, VarDeclList list, List<Statement> stmts, Exp e)
     {
+        if(list == null) {
+            list = new VarDeclList();
+        }
         return new MethodDeclNonVoid(pos, t, name, list, new StatementList(stmts), e);
     }
 
@@ -140,21 +134,22 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new InstVarDecl(pos, t, name);
     }
 
-    //: <type> ::= # `int =>
+    //: <baseType> ::= # `int =>
     public Type intType(int pos)
     {
         return new IntegerType(pos);
     }
-    //: <type> ::= # `boolean =>
+    //: <baseType> ::= # `boolean =>
     public Type booleanType(int pos)
     {
         return new BooleanType(pos);
     }
-    //: <type> ::= # ID =>
+    //: <baseType> ::= # ID =>
     public Type identifierType(int pos, String name)
     {
         return new IdentifierType(pos, name);
     }
+    //: <type> ::= <baseType> => pass
     //: <type> ::= # <type> <empty bracket pair> =>
     public Type newArrayType(int pos, Type t, Object dummy)
     {
@@ -166,6 +161,11 @@ public class MJGrammar implements MessageObject, FilePosObject
     //================================================================
     // statement-level constructs
     //================================================================
+    //: <stmt> ::= # `{ <stmtDecl>* `} =>
+    public Statement newBlock(int pos, List<Statement> sl)
+    {
+        return new Block(pos, new StatementList(sl));
+    }
 
     //: <stmt> ::= <assign> `; => pass
 
@@ -183,12 +183,8 @@ public class MJGrammar implements MessageObject, FilePosObject
 
     //: <stmt> ::= `; => null
 
-    //: <stmt> ::= # `{ <stmt>* `} =>
-    public Statement newBlock(int pos, List<Statement> sl)
-    {
-        return new Block(pos, new StatementList(sl));
-    }
-    //: <stmt> ::= <local var decl> `; => pass
+    //: <stmtDecl> ::= <stmt> => pass
+    //: <stmtDecl> ::= <local var decl> `; => pass
 
     //: <assign> ::= <exp1> # `= <exp> =>
     public Statement assign(Exp lhs, int pos, Exp rhs)
@@ -245,6 +241,10 @@ public class MJGrammar implements MessageObject, FilePosObject
     //: <stmt> ::= `if # `( <exp> `) <stmt> <else stmt> =>
     public Statement newIfElse(int pos, Exp e, Statement s1, Statement s2) 
     {
+        // if(s2 == null)
+        // {
+        //     new Block(pos, new StatementList())
+        // }
         return new If(pos, e, s1, s2);
     }
 
@@ -253,7 +253,7 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new Switch(pos, e, new StatementList(stmts));
     }
-    //: <switch choice> ::= <stmt> => pass
+    //: <switch choice> ::= <stmtDecl> => pass
     //: <switch choice> ::= <case> => pass
     //: <switch choice> ::= <default> => pass
     //: <case> ::= # `case <exp> `: =>
@@ -268,57 +268,33 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     // TODO - For Loop
-    // //: <stmt> ::= # `for `( <for exp> `; <exp> `; <for iter> `) <stmt> =>
-    // public Statement newFor(int pos, Statement forExp, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( !<for exp> `; <exp> `; <for iter> `) <stmt> =>
-    // public Statement newFor(int pos, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, null, s);
-    // }
-    // //: <stmt> ::= # `for `( <for exp> `; !<exp> `; <for iter> `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( <for exp> `; <exp> `; !<for iter> `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( !<for exp>? `; !<exp>? `; <for iter>? `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( <for exp>? `; !<exp>? `; !<for iter>? `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( !<for exp>? `; <exp>? `; !<for iter>? `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
-    // //: <stmt> ::= # `for `( !<for exp>? `; !<exp>? `; !<for iter>? `) <stmt> =>
-    // public Statement newFor(int pos, Statement forE, Exp e, Statement forI, Statement s)
-    // {
-    //     return new While(pos, e, s);
-    // }
+    //: <stmt> ::= # `for `( <for exp>? `; <exp>? `; <for iter>? `) <stmt> =>
+    public Statement newFor(int pos, Statement forExp, Exp e, Statement forI, Statement s)
+    {
+        List<Statement> list = new java.util.ArrayList<>();
+        list.add(forExp);
+        list.add(new While(pos, e, s));
+        list.add(forI);
+        return new Block(pos, new StatementList(list));
+    }
 
-    // //: <for exp> ::= <type> # ID `= <exp> =>
-    // public Statement forDecl(Type t, int pos, String name, Exp e)
-    // {
-    //     return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, name, e));
-    // }
-    // //: <for exp> ::= <assign> => pass
-    // //: <for exp> ::= <callExp> => pass
-    // //: <for iter> ::= <assign> => pass
-    // //: <for iter> ::= <callExp> => pass
+    //: <for exp> ::= <assign> => pass
+    //: <for exp> ::= <callStatement> => pass
+    //: <for exp> ::= <type> # ID `= <equals> =>
+    public Statement forExp(Type t, int pos, String s, Exp e)
+    {
+        return new LocalDeclStatement(pos, new LocalVarDecl(pos, t, s, e));
+    }
+    //: <equals> ::= <exp> => pass
 
+    //: <for iter> ::= <assign> => pass
+    //: <for iter> ::= <callStatement> => pass 
+    
+    //: <callStatement> ::= # <callExp> =>
+    public Statement createCallStatement(int pos, Exp e)
+    {
+        return new CallStatement(pos, (Call)e);
+    }
 
     //================================================================
     // expressions
@@ -407,7 +383,7 @@ public class MJGrammar implements MessageObject, FilePosObject
     }
 
     //: <exp3> ::= <exp2> => pass
-    //: <exp2> ::= # `! <exp1> =>
+    //: <exp2> ::= # `! <exp2> =>
     public Exp newNot(int pos, Exp e)
     {
         return new Not(pos, e);
@@ -422,12 +398,12 @@ public class MJGrammar implements MessageObject, FilePosObject
     //: <cast exp> ::= # `( <type> `) <exp1> => Exp newCast(int, Type, Exp)
 
     //: <exp2> ::= <unary exp> => pass
-    //: <unary exp> ::= # `- <unary exp> =>
+    //: <unary exp> ::= # `- <exp2> =>
     public Exp newUnaryMinus(int pos, Exp e)
     {
         return new Minus(pos, new IntegerLiteral(pos, 0), e);
     }
-    //: <unary exp> ::= # `+ <unary exp> =>
+    //: <unary exp> ::= # `+ <exp2> =>
     public Exp newUnaryPlus(int pos, Exp e)
     {
         return new Plus(pos, new IntegerLiteral(pos, 0), e);
@@ -444,7 +420,7 @@ public class MJGrammar implements MessageObject, FilePosObject
     {
         return new ArrayLookup(pos, e1, e2);
     }
-    //: <exp1> ::= `new <type> !<empty bracket pair> # `[ <exp> `] <empty bracket pair>* =>
+    //: <exp1> ::= `new <baseType> !<empty bracket pair> # `[ <exp> `] <empty bracket pair>* =>
     public Exp newArray(Type t, int pos, Exp e, List<Object> dummy)
     {
         return new NewArray(pos, t, e);
@@ -485,8 +461,7 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new Null(pos);
     }
 
-    // TODO - Expression in parenthesis
-    // : <exp1> ::= `( <exp> `) => pass
+    //: <exp1> ::= `( !<type> <exp1> `) => pass
     //: <exp1> ::= <exp1> `. # ID =>
     public Exp newInstVarAccess(Exp e, int pos, String name)
     {
@@ -511,35 +486,32 @@ public class MJGrammar implements MessageObject, FilePosObject
         return new ExpList(elist);
     }
     //: <comma exp> ::= `, <exp> => pass
-    //: <callExp> ::= # ID `( <expList> `) =>
-    public Exp newSelfCallParam(int pos, String name, ExpList params)
+    //: <callExp> ::= # ID `( <expList>? `) =>
+    public Exp newSelfCall(int pos, String name, ExpList params)
     {
+        if(params == null)
+        {
+            params = new ExpList();
+        }
         return new Call(pos, new This(pos), name, params);
     }
-    //: <callExp> ::= # ID `( !<expList> `) =>
-    public Exp newSelfCall(int pos, String name)
+    //: <callExp> ::= <exp1> `. # ID `( <expList>? `) =>
+    public Exp newCall(Exp e, int pos, String name, ExpList params) 
     {
-        return new Call(pos, new This(pos), name, new ExpList());
-    }
-    //: <callExp> ::= <exp1> `. # ID `( <expList> `) =>
-    public Exp newCallParam(Exp e, int pos, String name, ExpList params) 
-    {
+        if(params == null)
+        {
+            params = new ExpList();
+        }
         return new Call(pos, e, name, params);
     }
-    //: <callExp> ::= <exp1> `. # ID `( !<expList> `) =>
-    public Exp newCall(Exp e, int pos, String name) 
+    //: <callExp> ::= `super `. # ID `( <expList>? `) =>
+    public Exp newSuperCall(int pos, String name, ExpList params) 
     {
-        return new Call(pos, e, name, new ExpList());
-    }
-    //: <callExp> ::= `super `. # ID `( <expList> `) =>
-    public Exp newSuperCallParam(int pos, String name, ExpList params) 
-    {
+        if(params == null)
+        {
+            params = new ExpList();
+        }
         return new Call(pos, new Super(pos), name, params);
-    }
-    //: <callExp> ::= `super `. # ID `( !<expList> `) =>
-    public Exp newSuperCall(int pos, String name) 
-    {
-        return new Call(pos, new Super(pos), name, new ExpList());
     }
 
     //================================================================

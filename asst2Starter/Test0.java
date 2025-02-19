@@ -8,7 +8,7 @@ class Main {
   /*   /* this is another comment */
 
   int c;
-  
+
   public int main() {
     int b = 3;
     int n = 3+4*5;
@@ -25,6 +25,10 @@ class Main {
       b++;
     }
 
+    for(int i = 0; i < 3; i++) {
+      b++;
+    } 
+
     int x = 0;
     int y = 0;
     do {
@@ -37,8 +41,6 @@ class Main {
       case 2: case 3: y++; break;
       default: x--; y--; break;
       case 100: x = 0; break;
-
-      default: x++; break;
     }
 
     return n;
